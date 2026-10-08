@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ZEIL Evidence Interview</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600;700;800;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <!-- Relative paths so the page also renders when opened from an IDE preview server. -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="glow" aria-hidden="true"></div>
+
+<nav class="strip"><a href="index.html" class="active">Candidate</a><a href="recruiter.html">Recruiter</a></nav>
+<header class="topbar">
+  <div class="nav-left">AI Tools <span class="sep">/</span> <strong>Evidence Interview</strong></div>
+  <div class="logo">ZEIL</div>
+  <div class="nav-right"><span class="pill-outline hidden" id="meta"></span></div>
+</header>
+
+<!-- Screen 1: interview intro -->
+<main id="screen-setup" class="screen">
+  <section class="hero">
+    <h1>Show what you can <span class="accent">actually do.</span></h1>
+    <p>An AI interviewer that knows what evidence it needs, and asks until it finds it.</p>
+  </section>
+
+  <section class="card setup">
+    <div class="job-pick">
+      <label class="label" for="job-select">Interview for</label>
+      <select id="job-select"></select>
+    </div>
+    <h2 id="setup-role"></h2>
+    <div class="label">What you'll be asked about</div>
+    <ol class="comp-list" id="setup-comps"></ol>
+    <p class="setup-meta" id="setup-meta"></p>
+    <div class="actions">
+      <button class="btn primary" id="btn-start">Start interview</button>
+    </div>
+    <p class="hint">You'll be asked to allow camera and microphone access. Video is shown to you only and is never recorded or uploaded.</p>
+  </section>
+</main>
+
+<!-- Screens 2 + 3: candidate interview with live evidence panel -->
+<main id="screen-interview" class="screen hidden">
+  <div class="interview">
+    <section class="stage">
+      <div class="question-card">
+        <div class="q-head">
+          <span class="label" id="q-num">Scenario 1</span>
+          <span class="chip hidden" id="q-target"></span>
+        </div>
+        <p class="question" id="question"></p>
+      </div>
+
+      <div class="record-row">
+        <button class="record" id="btn-record" aria-label="Record answer" disabled><span></span></button>
+        <div class="record-status" id="record-status">Allow microphone access to start recording</div>
+        <button class="link" id="btn-type">Type instead</button>
+      </div>
+      <form class="type-box hidden" id="type-box">
+        <textarea id="type-text" rows="4" placeholder="Type your answer..."></textarea>
+        <button class="btn primary" type="submit">Submit answer</button>
+      </form>
+
+      <div class="history" id="history"></div>
+    </section>
+
+    <aside class="side">
+      <div class="cam">
+        <video id="cam" autoplay muted playsinline></video>
+        <div class="rec-badge hidden" id="rec-badge"><i></i> REC <span id="rec-time">0:00</span></div>
+        <div class="cam-prompt" id="cam-prompt">
+          <div class="cam-icon">📷</div>
+          <p id="cam-msg">Allow access to your camera and microphone so we can hear your answers.</p>
+          <button class="btn primary small" id="btn-allow">Allow camera &amp; mic</button>
+          <small id="cam-help"></small>
+        </div>
+      </div>
+      <div class="card panel">
+        <div class="label" id="panel-step"></div>
+        <div class="panel-title" id="panel-title"></div>
+        <ul class="dims" id="dims"></ul>
+        <div class="coverage">
+          <span>Evidence coverage</span><strong id="coverage">0%</strong>
+        </div>
+        <div class="bar"><div id="coverage-bar"></div></div>
+        <p class="fair-note"><span id="scorer">Classified by Jev</span> from the transcript only. Accent, filler words and polish are not criteria.</p>
+      </div>
+      <button class="btn outline full" id="btn-finish">End interview</button>
+    </aside>
+  </div>
+</main>
+
+<!-- Screen 4: recruiter result -->
+<main id="screen-result" class="screen hidden">
+  <section class="card result">
+    <div class="label" id="result-title"></div>
+    <div class="score"><span id="result-score"></span><small>/ 5</small></div>
+    <div class="band" id="result-band"></div>
+    <div class="result-coverage" id="result-coverage"></div>
+    <div id="result-comps"></div>
+    <div class="actions center">
+      <button class="btn primary" id="btn-restart">New interview</button>
+    </div>
+  </section>
+</main>
+
+<script src="common.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

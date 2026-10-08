@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ZEIL Interview Builder</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600;700;800;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="glow" aria-hidden="true"></div>
+
+<nav class="strip"><a href="index.html">Candidate</a><a href="recruiter.html" class="active">Recruiter</a></nav>
+<header class="topbar">
+  <div class="nav-left">AI Tools <span class="sep">/</span> <strong>Interview Builder</strong></div>
+  <div class="logo">ZEIL</div>
+  <div class="nav-right"><span class="pill-outline">Recruiter</span></div>
+</header>
+
+<!-- Step 1: describe the job -->
+<main id="screen-form" class="screen">
+  <section class="hero">
+    <h1>Screen for what the job <span class="accent">actually needs.</span></h1>
+    <p>Paste a job description. We'll design role-specific scenarios and the evidence to look for in each answer.</p>
+  </section>
+
+  <form class="card builder" id="job-form">
+    <label class="label" for="job-title">Job title</label>
+    <input id="job-title" placeholder="e.g. Machine Learning Engineer" required>
+
+    <label class="label" for="job-desc">Job description</label>
+    <textarea id="job-desc" rows="8" placeholder="Paste the job description: responsibilities, tools, team, the problems this person will face…"></textarea>
+
+    <div class="label">Competencies to assess <span class="muted">(up to 3)</span></div>
+    <div class="chip-input" id="chip-input">
+      <div id="chips"></div>
+      <input id="comp-input" placeholder="Type a competency and press Enter">
+    </div>
+    <div class="suggestions" id="suggestions"></div>
+    <p class="hint">Leave this empty and the AI will choose the three that matter most for this role.</p>
+
+    <div class="actions">
+      <button class="btn primary" type="submit" id="btn-generate">Generate screening scenarios</button>
+      <button class="btn outline" type="button" id="btn-example">Fill ML Engineer example</button>
+    </div>
+    <p class="form-error hidden" id="form-error"></p>
+  </form>
+
+  <section class="card jobs-list hidden" id="jobs-list"></section>
+
+  <section class="card fairness-card">
+    <div class="fair-head">
+      <div>
+        <div class="label">Fairness check</div>
+        <h3>Does presentation style change the score?</h3>
+        <p class="muted">Scores two wordings of the same story, one polished and one casual, with the same rubric.</p>
+      </div>
+      <button class="btn outline" id="btn-fairness">Run presentation-sensitivity check</button>
+    </div>
+    <div id="fairness"></div>
+  </section>
+</main>
+
+<!-- Step 2: review and edit -->
+<main id="screen-review" class="screen hidden">
+  <div class="review-head">
+    <div>
+      <div class="label">Review scenarios</div>
+      <h1 class="review-title" id="review-title"></h1>
+      <p class="muted">Edit any scenario before publishing. Each one is scored only against the evidence listed under it.</p>
+    </div>
+    <div class="actions">
+      <button class="btn outline" id="btn-back">Edit job</button>
+      <button class="btn outline" id="btn-regen">Regenerate</button>
+      <button class="btn primary" id="btn-publish">Publish interview</button>
+    </div>
+  </div>
+  <div class="scenarios" id="scenarios"></div>
+</main>
+
+<!-- Step 3: published -->
+<main id="screen-done" class="screen hidden">
+  <section class="card published">
+    <div class="done-badge">✓</div>
+    <h1>Interview ready</h1>
+    <p class="muted" id="done-summary"></p>
+    <div class="label">Candidate link</div>
+    <div class="link-row">
+      <input id="candidate-link" readonly>
+      <button class="btn outline small" id="btn-copy">Copy</button>
+    </div>
+    <div class="actions center">
+      <a class="btn primary" id="btn-open" href="#">Open candidate interview</a>
+      <button class="btn outline" id="btn-new">Create another</button>
+    </div>
+  </section>
+</main>
+
+<script src="common.js"></script>
+<script src="recruiter.js"></script>
+</body>
+</html>
