@@ -190,7 +190,7 @@ _JOB_SCHEMA = {
 }
 
 
-def generate_job(title: str, description: str, competencies: list[str]) -> list[dict]:
+def generate_job(title: str, description: str, competencies: list[str]) -> dict:
     """Turn a job description and competencies into role-specific screening scenarios with evidence rubrics."""
     if competencies:
         which = "Use exactly these competencies, in this order: " + "; ".join(competencies[:MAX_COMPETENCIES])
