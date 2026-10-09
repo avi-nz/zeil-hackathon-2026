@@ -26,7 +26,7 @@ function postJson(path, data) {
 }
 
 function scenarioTypeLabel(type) {
-  return type === "situational" ? "Situational" : "Behavioural";
+  return { situational: "Situational", roleplay: "Role-play" }[type] || "Behavioural";
 }
 
 /* ---------- Hands-free voice control ----------

@@ -89,6 +89,8 @@ async function generate() {
     draft = await postJson("/api/jobs/generate", {
       title: $("job-title").value, description: $("job-desc").value, competencies,
     });
+    // Gemini only recommends; the recruiter decides (the switch on the review screen).
+    draft.communication.included = draft.communication.recommended;
     renderReview();
     show("review");
   } catch (e) {
@@ -134,7 +136,56 @@ function renderReview() {
       </li>`).join("")}</ul>
     </article>`).join("");
   $("btn-publish").disabled = false;
+  renderCommunication();
 }
+
+/* ---------- Optional communication assessment ---------- */
+
+function renderCommunication() {
+  const comm = draft.communication;
+  const c = comm.competency;
+  $("communication").innerHTML = `
+    <article class="card scenario-card comm-card ${comm.included ? "" : "off"}">
+      <div class="scenario-top">
+        <span class="num comm-num">💬</span>
+        <div class="scenario-meta">
+          <div class="label">Optional competency</div>
+          <h3>Communication</h3>
+        </div>
+        <span class="chip">Role-play</span>
+        <div class="switch" role="group" aria-label="Include communication">
+          <button type="button" data-include="1" class="${comm.included ? "on" : ""}">Include</button>
+          <button type="button" data-include="0" class="${comm.included ? "" : "on"}">Don't include</button>
+        </div>
+      </div>
+      <div class="recommendation ${comm.recommended ? "yes" : "no"}">
+        <strong>${comm.recommended ? "Gemini recommends assessing communication for this role." : "Gemini doesn't recommend assessing communication for this role."}</strong>
+        ${escapeHtml(comm.rationale)} <span class="muted">You decide.</span>
+      </div>
+      ${comm.included ? `
+        <label class="label" for="comm-scenario">Role-play the candidate will hear</label>
+        <textarea class="scenario-text" id="comm-scenario" rows="3">${escapeHtml(c.scenario)}</textarea>
+        <p class="rationale"><strong>How it's scored:</strong> from the candidate's words only, never accent, voice,
+          grammar slips or vocabulary. It isn't restated before scoring, because how they put things is what's measured.</p>
+        <div class="label">Evidence the AI will look for (fixed rubric)</div>
+        <ul class="evidence-list">${c.dimensions.map((d) => `<li>
+          <span class="mark strong">✓</span>
+          <div><div class="name">${escapeHtml(d.label)}</div><div class="desc">${escapeHtml(d.description)}</div></div>
+        </li>`).join("")}</ul>` : ""}
+    </article>`;
+}
+
+function setCommunication(included) {
+  draft.communication.included = included;
+  renderCommunication();
+}
+
+$("communication").addEventListener("click", (e) => {
+  if (e.target.dataset.include !== undefined) setCommunication(e.target.dataset.include === "1");
+});
+$("communication").addEventListener("input", (e) => {
+  if (e.target.id === "comm-scenario") draft.communication.competency.scenario = e.target.value;
+});
 
 $("scenarios").addEventListener("input", (e) => {
   if (e.target.classList.contains("scenario-text")) draft.competencies[Number(e.target.dataset.i)].scenario = e.target.value;
@@ -201,7 +252,7 @@ async function loadJobs() {
 
 const HINTS = {
   form: "Try: “I want to create a job for a Machine Learning Engineer…” · “The competencies are…” · “Generate the scenarios”",
-  review: "Say: “Complete” to publish · “Regenerate” · “Remove scenario 2” · “Go back and edit the job”",
+  review: "Say: “Complete” to publish · “Include communication” / “Don't assess communication” · “Regenerate” · “Remove scenario 2”",
   done: "Say: “Open the interview” · “Create another job”",
 };
 
@@ -254,6 +305,8 @@ async function handleUtterance(utterance) {
     if (i >= 0 && i < draft.competencies.length) { draft.competencies.splice(i, 1); renderReview(); }
   } else if (r.command === "open_interview" && screen === "done") location.href = `${$("btn-open").href}&voice=1`;
   else if (r.command === "new_job") $("btn-new").click();
+  else if (r.command === "include_communication" && screen === "review") setCommunication(true);
+  else if (r.command === "exclude_communication" && screen === "review") setCommunication(false);
 }
 
 renderChips();

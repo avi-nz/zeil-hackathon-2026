@@ -52,8 +52,13 @@
           <span class="chip hidden" id="q-target"></span>
         </div>
         <p class="question" id="question"></p>
+        <ul class="claims hidden" id="claims"></ul>
       </div>
 
+      <div class="confirm-actions hidden" id="confirm-actions">
+        <button class="btn primary" id="btn-yes">Yes, that's right</button>
+        <button class="btn outline" id="btn-correct">Correct something</button>
+      </div>
       <div class="record-row">
         <button class="record" id="btn-record" aria-label="Record answer" disabled><span></span></button>
         <div class="record-status" id="record-status">Allow microphone access to start recording</div>
@@ -86,7 +91,7 @@
           <span>Evidence coverage</span><strong id="coverage">0%</strong>
         </div>
         <div class="bar"><div id="coverage-bar"></div></div>
-        <p class="fair-note"><span id="scorer">Classified by Jev</span> from the transcript only. Accent, filler words and polish are not criteria.</p>
+        <p class="fair-note"><span id="scorer">Classified by Jev</span> from text only; it never hears your voice. Accent, filler words and polish are not criteria.</p>
       </div>
       <button class="btn outline full" id="btn-finish">End interview</button>
     </aside>
@@ -101,8 +106,19 @@
     <div class="band" id="result-band"></div>
     <div class="result-coverage" id="result-coverage"></div>
     <div id="result-comps"></div>
+    <div class="decision" id="decision">
+      <div class="label">Recruiter decision</div>
+      <div class="actions center" id="decision-buttons">
+        <button class="btn reject" id="btn-reject">Reject applicant</button>
+        <button class="btn primary" id="btn-advance">Move application forward</button>
+      </div>
+      <div class="decision-status hidden" id="decision-status">
+        <span id="decision-text"></span>
+        <button class="link" id="btn-undo">Undo</button>
+      </div>
+    </div>
     <div class="actions center">
-      <button class="btn primary" id="btn-restart">New interview</button>
+      <button class="btn outline" id="btn-restart">New interview</button>
     </div>
   </section>
 </main>

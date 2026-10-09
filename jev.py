@@ -11,7 +11,7 @@ from dotenv import load_dotenv
 
 import gemini
 
-from rubric import FAIRNESS_RULE, LEVELS, PRESENT_THRESHOLD, STRONG_LEVEL
+from rubric import LEVELS, PRESENT_THRESHOLD, STRONG_LEVEL, rule_for
 
 load_dotenv()
 
@@ -20,12 +20,13 @@ MODEL = os.getenv("JEV_MODEL", "typesafe/jev-1.13")
 
 
 def _questions(competency):
+    rule = rule_for(competency)
     questions = {}
     for d in competency["dimensions"]:
         questions[f"{d['id']}__present"] = {
             "type": "noul",
             "instructions": f"Does the candidate's answer contain explicit evidence for '{d['label']}'? "
-                            f"{d['description']} Only count what was actually stated. {FAIRNESS_RULE}",
+                            f"{d['description']} Only count what was actually stated. {rule}",
             "criteria": {
                 "true": "The candidate explicitly stated information that demonstrates this.",
                 "false": "The candidate did not state this, or only implied it.",
@@ -34,7 +35,7 @@ def _questions(competency):
         questions[f"{d['id']}__level"] = {
             "type": "score",
             "instructions": f"How strong is the stated evidence for '{d['label']}'? "
-                            f"{d['description']} {FAIRNESS_RULE}",
+                            f"{d['description']} {rule}",
             "criteria": LEVELS,
         }
     return questions
@@ -97,6 +98,18 @@ def score(transcript: str, role: str, competency: dict) -> tuple[dict, str]:
     except requests.RequestException as exc:
         print(f"Jev unavailable, using Gemini fallback scorer: {exc}")
         return _with_status(gemini.classify(transcript, competency)), "gemini-fallback"
+
+
+def review_reasons(dim: dict) -> list[str]:
+    """Where Jev's own numbers say the verdict is uncertain, ask a human to look rather than pretending."""
+    reasons = []
+    if 0.35 <= dim["present"] <= 0.65:
+        reasons.append(f"Borderline: Jev is {round(dim['present'] * 100)}% sure evidence is present")
+    elif dim["status"] != "missing" and abs(dim["level"] - STRONG_LEVEL) < 0.3:
+        reasons.append("Borderline between partial and strong evidence")
+    if dim["status"] != "missing" and dim["confidence"] and dim["confidence"] < 0.5:
+        reasons.append("Jev's strength rating is spread across levels (low confidence)")
+    return reasons
 
 
 def rating(dim: dict) -> float:

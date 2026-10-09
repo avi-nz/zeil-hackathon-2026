@@ -199,12 +199,6 @@ a.btn { display: inline-block; text-decoration: none; }
 .band.weak { background: #fff4a8; }
 .result-coverage { color: var(--muted); margin-top: 12px; }
 .result h3 { text-align: left; margin-top: 36px; font-size: 22px; }
-.why { list-style: none; padding: 0; text-align: left; }
-.why li { display: grid; grid-template-columns: 30px 1fr auto; gap: 10px; padding: 16px 0; border-top: 1px solid var(--line); }
-.why .name { font-weight: 600; }
-.why .ev { color: var(--muted); font-size: 15px; margin-top: 4px; line-height: 1.5; }
-.why .ev.none { font-style: italic; }
-.why .r { font-weight: 700; white-space: nowrap; color: var(--purple); }
 details { text-align: left; margin-top: 16px; }
 summary { cursor: pointer; color: var(--purple); font-weight: 600; }
 
@@ -326,3 +320,80 @@ body { padding-bottom: 110px; }
 .voice-hint:empty { display: none; }
 .voice-filled { animation: filled 1.6s ease-out; }
 @keyframes filled { 0% { box-shadow: 0 0 0 3px var(--purple); background: var(--lilac-soft); } 100% { box-shadow: 0 0 0 0 transparent; } }
+
+/* "What we understood" confirmation */
+.question.small { font-size: 26px; }
+.claims { list-style: none; padding: 0; margin: 22px 0 0; display: grid; gap: 10px; }
+.claims li {
+  position: relative; padding: 10px 14px 10px 40px; background: var(--lilac-soft); border-radius: 14px;
+  font-size: 17px; line-height: 1.45;
+}
+.claims li::before {
+  content: "✓"; position: absolute; left: 12px; top: 10px; width: 20px; height: 20px; border-radius: 50%;
+  background: var(--green); display: grid; place-items: center; font-size: 11px; font-weight: 800;
+}
+.claims .unclear { background: #fff4a8; border-bottom: 2px dashed #c9a800; padding: 0 3px; border-radius: 4px; }
+.confirm-actions { display: flex; gap: 12px; justify-content: center; margin-top: 28px; }
+
+/* Recruiter report */
+.flag-count { color: #8a6d00; font-weight: 600; }
+.flag-count.ok { color: var(--muted); font-weight: 500; }
+.how { text-align: left; margin-top: 28px; background: var(--lilac-soft); border-radius: 16px; padding: 18px 22px; }
+.how ol { margin: 8px 0 0; padding-left: 20px; display: grid; gap: 4px; font-size: 14px; line-height: 1.5; }
+.comp-chips { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+.chip.ok { background: #f3ffd6; color: #3f5a00; }
+.chip.warn { background: #fff4a8; color: #6b5800; }
+.raw-line { font-family: Inter, sans-serif; font-size: 12px; font-weight: 500; color: var(--muted); margin-top: 6px; }
+.dim-list { list-style: none; padding: 0; text-align: left; margin: 12px 0 0; }
+.dim-row { display: grid; grid-template-columns: 30px 1fr; gap: 10px; padding: 16px 0; border-top: 1px solid var(--line); }
+.dim-row.flagged { background: linear-gradient(90deg, rgba(248, 226, 21, .08), transparent); }
+.dim-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.dim-head .name { font-weight: 700; font-size: 16px; }
+.dim-head .r { margin-left: auto; font-weight: 700; color: var(--purple); }
+.verdict { font-size: 12px; font-weight: 600; padding: 2px 9px; border-radius: 999px; }
+.verdict.strong { background: #f3ffd6; color: #3f5a00; }
+.verdict.partial { background: #fff4a8; color: #6b5800; }
+.verdict.missing { background: var(--grey); color: var(--muted); }
+.metrics { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+.metric {
+  display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted);
+  border: 1px solid var(--line); border-radius: 999px; padding: 3px 10px; background: #fff;
+}
+.metric b { color: var(--ink); }
+.meter { display: inline-block; width: 46px; height: 5px; background: var(--grey); border-radius: 3px; overflow: hidden; }
+.meter i { display: block; height: 100%; background: var(--purple); }
+.quote { margin: 10px 0 0; padding: 8px 14px; border-left: 3px solid var(--purple); background: #fafaff; font-size: 15px; line-height: 1.5; }
+.quote .label, .ev-summary .label { display: block; margin-bottom: 2px; font-size: 10px; }
+.ev-summary { margin: 10px 0 0; font-size: 14px; color: var(--muted); line-height: 1.5; }
+.ev-summary.none { font-style: italic; }
+.trail { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-top: 10px; font-size: 12px; }
+.trail .step { padding: 3px 9px; border-radius: 999px; background: var(--grey); color: var(--muted); }
+.trail .step.strong { background: #f3ffd6; color: #3f5a00; }
+.trail .step.partial { background: #fff4a8; color: #6b5800; }
+.trail .arrow { color: var(--muted); }
+.review { margin-top: 8px; font-size: 13px; color: #6b5800; font-weight: 600; }
+
+/* Recruiter decision (mock) */
+.decision { margin-top: 36px; padding-top: 24px; border-top: 2px solid var(--lilac-soft); }
+.decision .actions { margin-top: 14px; }
+.btn.reject { background: #fff; border-color: var(--red); color: var(--red); }
+.btn.reject:hover { background: #fff1f1; }
+.decision-status {
+  display: flex; justify-content: center; align-items: center; gap: 14px; margin-top: 14px;
+  padding: 14px 20px; border-radius: 999px; font-weight: 600;
+}
+.decision-status.advanced { background: var(--green); color: var(--ink); }
+.decision-status.rejected { background: #ffe3e3; color: #a1181b; }
+
+/* Optional communication competency (recruiter review) */
+.comm-card { margin-top: 20px; border: 1.5px dashed var(--lilac); }
+.comm-card.off { opacity: .85; }
+.comm-num { background: var(--lilac-soft) !important; font-size: 18px; }
+.switch { display: inline-flex; background: var(--grey); border-radius: 999px; padding: 3px; }
+.switch button { font: inherit; font-size: 13px; font-weight: 600; border: 0; background: none; padding: 7px 14px; border-radius: 999px; cursor: pointer; color: var(--muted); }
+.switch button.on { background: #fff; color: var(--purple); box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+.recommendation { font-size: 14px; line-height: 1.5; border-radius: 14px; padding: 12px 16px; margin-bottom: 18px; }
+.recommendation.yes { background: #f3ffd6; }
+.recommendation.no { background: var(--grey); }
+.recommendation strong { display: block; margin-bottom: 2px; }
+.comm-why { text-align: left; font-size: 14px; line-height: 1.5; background: #fafaff; border-radius: 12px; padding: 10px 14px; margin: 14px 0 0; }

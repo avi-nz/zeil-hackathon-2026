@@ -48,5 +48,21 @@ Both pages have a voice bar at the bottom (Chrome only; uses Chrome's speech rec
 - Candidate: "start the interview"; recording starts automatically after each question is read out;
   say "that's my answer" to submit; "repeat the question"; "end the interview".
 
-Before recording the demo: open both pages once, click the mic, and allow microphone and camera access
-("allow on every visit"). Voice mode is remembered, so after that nothing needs to be clicked.
+Before recording the demo, either run `./demo_chrome.sh` (a separate Chrome window that auto-accepts camera/mic
+prompts and allows questions to be read aloud), or set Camera and Microphone to Allow for http://localhost:8000 in
+Chrome's site settings. Voice mode is remembered, so after that nothing needs to be clicked.
+
+## Evaluation and fairness
+
+- After each scenario the candidate sees "Here's what we understood" (Gemini restates their answer claim by claim,
+  adding nothing) and confirms or corrects it by voice. Jev scores both the raw transcript and the confirmed
+  version; big differences are flagged for human review.
+- The recruiter report shows Jev's numbers per dimension (probability evidence is present, strength on the
+  4-level scale, confidence), the candidate's exact words (quotes are checked against the transcript), the
+  evidence trail across follow-ups, and "needs human review" flags where Jev is borderline.
+- `fairness_eval.py` scores the same stories in native and second-language phrasing, raw vs restated, and writes
+  `results/fairness_eval.md`.
+- Optional **Communication** competency for customer-facing roles: when generating scenarios, Gemini recommends
+  whether the job needs it (with a reason); the recruiter switches it on or off. It's a role-play, scored by Jev
+  on the candidate's own words against a fixed rubric (`COMMUNICATION_DIMENSIONS` in `rubric.py`), not restated,
+  and never on accent, voice or grammar. Other competencies' rubrics are told not to include communication.

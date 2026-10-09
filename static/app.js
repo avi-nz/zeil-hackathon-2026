@@ -2,6 +2,7 @@
 let job, sessionId, stream, recorder, chunks = [], recStart, recTimer;
 let scenarioIndex = 0, followUps = 0, lastStatus = {};
 let screen = "setup", busy = false, awaitingAnswer = false;
+let confirming = false;  // candidate is checking our restatement of their answer
 
 function show(name) {
   screen = name;
@@ -199,15 +200,26 @@ $("type-box").onsubmit = (e) => {
 
 async function submit(form) {
   let error = null;
-  setBusy("Extracting evidence…");
-  const step = setTimeout(() => setBusy("Finding missing evidence…"), 2500);
+  const path = confirming ? "/api/confirm" : "/api/answer";
+  if (confirming && !form.has("decision")) form.append("decision", "correct");
+  const confirmingYes = form.get("decision") === "yes";
+  setBusy(confirmingYes ? "Scoring your confirmed answer with Jev…" : confirming ? "Updating our summary…" : "Extracting evidence…");
+  const step = setTimeout(() => !confirming && setBusy("Finding missing evidence…"), 2500);
   try {
-    const r = await api("/api/answer", { method: "POST", body: form });
-    addTurn($("question").textContent, $("q-target").dataset.label, r.transcript);
+    const r = await api(path, { method: "POST", body: form });
+    if (r.transcript) {
+      addTurn(confirming ? "Correction to our summary" : $("question").textContent,
+        confirming ? null : $("q-target").dataset.label, r.transcript);
+    }
     showEvidence(r.answered, r.target);
-    if (r.done) {
+    if (r.phase === "confirm") {
+      clearTimeout(step);
+      showConfirm(r.claims);
+    } else if (r.done) {
+      hideConfirm();
       setTimeout(() => renderResult(r.result), 1200);
     } else if (r.advanced) {
+      hideConfirm();
       // Let the completed panel register before moving to the next scenario.
       clearTimeout(step);
       setBusy("Scenario complete, moving on…");
@@ -231,19 +243,74 @@ async function submit(form) {
 function setBusy(message) {
   busy = !!message;
   $("btn-record").disabled = !!message || !stream;
+  $("btn-yes").disabled = $("btn-correct").disabled = !!message;
   $("question").classList.toggle("thinking", !!message);
   $("record-status").textContent = message
-    || (stream ? "Press the red button and answer out loud" : "Allow microphone access to start recording");
+    || (confirming ? "Is this what you meant? Confirm it, or correct anything we got wrong"
+      : stream ? "Press the red button and answer out loud" : "Allow microphone access to start recording");
 }
+
+/* ---------- "What we understood": candidate confirms our restatement ---------- */
+
+function showConfirm(claims) {
+  confirming = true;
+  awaitingAnswer = false;
+  $("q-num").textContent = "Check our understanding";
+  $("q-target").classList.add("hidden");
+  $("q-target").dataset.label = "";
+  $("question").textContent = "Here's what we understood from your answer. Is this right?";
+  $("question").classList.add("small");
+  $("claims").innerHTML = claims.map((c) => `<li>${escapeHtml(c).replace(/\[unclear:?([^\]]*)\]/gi,
+    '<span class="unclear" title="We weren\'t sure we heard this correctly">$1</span>')}</li>`).join("");
+  $("claims").classList.remove("hidden");
+  $("confirm-actions").classList.remove("hidden");
+  $("btn-record").classList.add("hidden");
+  speak("Here's what I understood from your answer. Please check it on screen. Is that right?", voice);
+  voice.render();
+}
+
+function hideConfirm() {
+  confirming = false;
+  $("question").classList.remove("small");
+  $("claims").classList.add("hidden");
+  $("confirm-actions").classList.add("hidden");
+  $("btn-record").classList.remove("hidden");
+}
+
+function confirmYes() {
+  if (busy) return;
+  const form = new FormData();
+  form.append("session_id", sessionId);
+  form.append("decision", "yes");
+  submit(form);
+}
+
+function startCorrection() {
+  if (busy) return;
+  $("btn-record").classList.remove("hidden");
+  if (stream) {
+    startRecording();
+    $("record-status").textContent = voice.enabled
+      ? "Tell us what to change, then say “That's my answer”"
+      : "Tell us what to change, then press the button again";
+  } else {
+    $("type-box").classList.remove("hidden");
+  }
+}
+
+$("btn-yes").onclick = confirmYes;
+$("btn-correct").onclick = startCorrection;
 
 function setQuestion(text, target) {
   const total = job.competencies.length;
-  const base = total > 1 ? `Scenario ${scenarioIndex + 1} of ${total}` : "Scenario";
-  $("q-num").textContent = followUps ? `${base} · Follow-up ${followUps}` : base;
+  const roleplay = job.competencies[scenarioIndex].kind === "communication";
+  const base = (total > 1 ? `Scenario ${scenarioIndex + 1} of ${total}` : "Scenario") + (roleplay ? " · Role-play" : "");
+  $("q-num").textContent = followUps ? `${base} · ${roleplay ? "Reply" : "Follow-up"} ${followUps}` : base;
   $("question").textContent = text;
   $("q-target").classList.toggle("hidden", !target);
   $("q-target").dataset.label = target ? target.label : "";
-  $("q-target").textContent = target ? `Seeking evidence: ${target.label}` : "";
+  // In a role-play, naming the missing behaviour would coach the candidate, so just show that it continues.
+  $("q-target").textContent = !target ? "" : roleplay ? "Role-play continues" : `Seeking evidence: ${target.label}`;
   readQuestion();
 }
 
@@ -281,7 +348,7 @@ function showCompetency(view) {
 function showEvidence(view, target) {
   $("dims").innerHTML = view.dimensions.map((d) => {
     const flash = lastStatus[d.id] && lastStatus[d.id] !== d.status && d.status !== "missing";
-    return `<li class="${flash ? "flash" : ""} ${d.id === target ? "targeted" : ""}" title="${escapeHtml(d.evidence || d.description)}">
+    return `<li class="${flash ? "flash" : ""} ${d.id === target ? "targeted" : ""}" title="${escapeHtml(d.quote || d.summary || d.description)}">
       <span class="name">${escapeHtml(d.label)}</span><span class="mark ${d.status}">${MARK[d.status]}</span></li>`;
   }).join("");
   view.dimensions.forEach((d) => (lastStatus[d.id] = d.status));
@@ -314,9 +381,56 @@ function hasScore(summary) {
   return summary && summary.score != null && !summary.band.startsWith("INSUFFICIENT");
 }
 
+const VERDICT = { strong: "Strong evidence", partial: "Partial evidence", missing: "Insufficient evidence" };
+
+function pct(p) {
+  return `${Math.round(p * 100)}%`;
+}
+
+function dimensionRow(d) {
+  if (d.status === "missing" && d.present == null) {
+    return `<li class="dim-row"><span class="mark missing">○</span><div class="dim-body">
+      <div class="dim-head"><span class="name">${escapeHtml(d.label)}</span><span class="verdict missing">Not reached</span></div></div></li>`;
+  }
+  const evidence = d.quote
+    ? `<blockquote class="quote"><span class="label">Candidate's words</span>“${escapeHtml(d.quote)}”</blockquote>`
+    : d.status !== "missing" && d.summary
+      ? `<p class="ev-summary"><span class="label">Summary</span>${escapeHtml(d.summary)} <em>(no exact quote found)</em></p>`
+      : d.status === "missing"
+        ? `<p class="ev-summary none">Not demonstrated in the answers. Reported as missing, not scored as poor.</p>` : "";
+  const trail = d.trail.length ? `<div class="trail">${d.trail.map((t) =>
+    `<span class="step ${t.status}">${escapeHtml(t.label)}${t.targeted ? " · targeted" : ""} <b>${MARK[t.status]}</b></span>`)
+    .join('<span class="arrow">→</span>')}</div>` : "";
+  const changed = d.raw_status && d.raw_status !== d.status
+    ? `<span class="metric">Raw transcript: ${VERDICT[d.raw_status].toLowerCase()}</span>` : "";
+  return `<li class="dim-row ${d.review.length ? "flagged" : ""}">
+    <span class="mark ${d.status}">${MARK[d.status]}</span>
+    <div class="dim-body">
+      <div class="dim-head">
+        <span class="name">${escapeHtml(d.label)}</span>
+        <span class="verdict ${d.status}">${VERDICT[d.status]}</span>
+        <span class="r">${d.status === "missing" ? "n/a" : `${d.rating.toFixed(1)} / 5`}</span>
+      </div>
+      <div class="metrics">
+        <span class="metric" title="Jev: probability that explicit evidence is present">
+          Evidence present <b>${pct(d.present)}</b><i class="meter"><i style="width:${pct(d.present)}"></i></i></span>
+        <span class="metric" title="Jev: position on the 4-level evidence scale (0 = none, 3 = detailed)">
+          Strength <b>${d.level.toFixed(1)} / 3</b></span>
+        ${d.confidence ? `<span class="metric" title="Jev: how concentrated its strength rating is">Confidence <b>${pct(d.confidence)}</b></span>` : ""}
+        ${changed}
+      </div>
+      ${evidence}
+      ${trail}
+      ${d.review.map((reason) => `<div class="review">⚑ Needs human review: ${escapeHtml(reason)}</div>`).join("")}
+    </div>
+  </li>`;
+}
+
 function renderResult(r) {
   speechSynthesis.cancel();
   awaitingAnswer = false;
+  hideConfirm();
+  resetDecision();
   const o = r.overall;
   $("result-title").textContent = r.title;
   $("result-score").textContent = o.score != null ? o.score.toFixed(1) : "n/a";
@@ -324,28 +438,51 @@ function renderResult(r) {
   $("result-band").textContent = o.band;
   $("result-band").className = `band ${bandClass(o.band)}`;
   const first = r.competencies[0].summary;
-  $("result-coverage").textContent = r.competencies.length > 1
-    ? `Overall across ${o.assessed} of ${o.total} competencies with enough evidence`
-    : (first ? `Evidence coverage: ${first.coverage}/${first.total}` : "");
+  $("result-coverage").innerHTML = [
+    r.competencies.length > 1
+      ? `Overall across ${o.assessed} of ${o.total} competencies with enough evidence`
+      : first ? `Evidence coverage: ${first.coverage}/${first.total}` : "",
+    o.flagged ? `<span class="flag-count">⚑ ${o.flagged} item${o.flagged > 1 ? "s" : ""} need${o.flagged > 1 ? "" : "s"} human review</span>`
+      : `<span class="flag-count ok">No items flagged for review</span>`,
+  ].filter(Boolean).join(" · ");
 
-  $("result-comps").innerHTML = r.competencies.map((c) => {
+  const how = `<div class="how">
+    <div class="label">How this was scored</div>
+    <ol>
+      <li><b>Gemini listened</b> and transcribed the answers. The scorer never hears the voice.</li>
+      <li><b>The candidate confirmed</b> our plain-English summary of what they meant, or corrected it.</li>
+      <li><b>Jev, a classifier model</b>, judged each evidence dimension and returned probabilities, not an essay.</li>
+      <li><b>Score</b> = average strength of the evidenced dimensions. Missing evidence is reported, not scored as poor.</li>
+      ${r.competencies.some((c) => c.kind === "communication") ? `<li><b>Communication</b> (opted in by the recruiter for this role)
+        is scored from the candidate's own words in a role-play, without restating, and never on accent or voice.</li>` : ""}
+    </ol></div>`;
+
+  $("result-comps").innerHTML = how + r.competencies.map((c) => {
     const s = c.summary;
     const band = s ? s.band : "NOT REACHED";
+    const status = c.kind === "communication"
+      ? `<span class="chip">Scored on the candidate's own words · not restated</span>`
+      : c.confirmed
+        ? `<span class="chip ok">✓ Summary confirmed by candidate${c.corrections ? ` (${c.corrections} correction${c.corrections > 1 ? "s" : ""})` : ""}</span>`
+        : c.turns.length ? `<span class="chip warn">Summary not confirmed</span>` : "";
+    const why = c.kind === "communication" && r.communication
+      ? `<p class="comm-why"><strong>Why communication is assessed:</strong> included by the recruiter${r.communication.recommended
+        ? " on Gemini's recommendation" : ""}. ${escapeHtml(r.communication.rationale)} Judged on clarity, structure,
+        listener-friendly language, acknowledging the listener and a clear next step, never on accent, voice or grammar.</p>` : "";
+    const rawLine = c.raw_summary && hasScore(c.raw_summary) && hasScore(s)
+      ? `<div class="raw-line">Raw transcript ${c.raw_summary.score.toFixed(1)} → confirmed meaning ${s.score.toFixed(1)}</div>` : "";
     return `<div class="comp-block">
       <div class="comp-head">
-        <div><div class="label">${scenarioTypeLabel(c.scenario_type)} scenario</div><h3>${escapeHtml(c.name)}</h3></div>
+        <div><div class="label">${scenarioTypeLabel(c.scenario_type)} scenario</div><h3>${escapeHtml(c.name)}</h3>
+          <div class="comp-chips">${status}${c.flagged ? `<span class="chip warn">⚑ ${c.flagged} to review</span>` : ""}</div></div>
         <div class="comp-score">${hasScore(s) ? `${s.score.toFixed(1)}<small> / 5</small>` : `<small>No score</small>`}
-          <span class="band small ${bandClass(band)}">${band}</span></div>
+          <span class="band small ${bandClass(band)}">${band}</span>${rawLine}</div>
       </div>
-      <ul class="why">${c.dimensions.map((d) => `<li>
-        <span class="mark ${d.status}">${MARK[d.status]}</span>
-        <div><div class="name">${escapeHtml(d.label)}</div>
-          <div class="ev ${d.evidence ? "" : "none"}">${d.status === "missing"
-            ? "Insufficient evidence: not demonstrated in the answers (not scored as poor)."
-            : escapeHtml(d.evidence || "Evidence present.")}</div></div>
-        <span class="r">${d.status === "missing" ? "n/a" : `${d.rating.toFixed(1)} / 5`}</span>
-      </li>`).join("")}</ul>
-      ${c.turns.length ? `<details><summary>View transcript</summary><div class="history">${c.turns.map((t) => `<div class="turn">
+      ${why}
+      <ul class="dim-list">${c.dimensions.map(dimensionRow).join("")}</ul>
+      ${c.claims ? `<details><summary>What the candidate confirmed they meant</summary><ul class="claims">${c.claims
+        .map((x) => `<li>${escapeHtml(x)}</li>`).join("")}</ul></details>` : ""}
+      ${c.turns.length ? `<details><summary>Full transcript</summary><div class="history">${c.turns.map((t) => `<div class="turn">
         <div class="q">${escapeHtml(t.question)}</div><div class="a">${escapeHtml(t.transcript)}</div></div>`).join("")}</div></details>` : ""}
     </div>`;
   }).join("");
@@ -354,17 +491,42 @@ function renderResult(r) {
 
 $("btn-restart").onclick = () => show("setup");
 
+/* ---------- Recruiter decision (mock: nothing is sent anywhere) ---------- */
+
+function decide(decision) {
+  const advance = decision === "advance";
+  $("decision-buttons").classList.add("hidden");
+  $("decision-status").classList.remove("hidden");
+  $("decision-status").className = `decision-status ${advance ? "advanced" : "rejected"}`;
+  $("decision-text").textContent = advance
+    ? "✓ Application moved forward to the next stage"
+    : "✕ Applicant rejected. They'll be notified with their evidence summary";
+  voice.render();
+}
+
+function resetDecision() {
+  $("decision-buttons").classList.remove("hidden");
+  $("decision-status").classList.add("hidden");
+}
+
+$("btn-advance").onclick = () => decide("advance");
+$("btn-reject").onclick = () => decide("reject");
+$("btn-undo").onclick = resetDecision;
+
 /* ---------- Hands-free voice ---------- */
 
 const START_RE = /\b(start|begin)\b.*\binterview\b|\b(let'?s|i'?m ready to) (start|begin|go)\b/;
 const DONE_RE = /\b(that'?s|that is) (my|the) answer\b|\bi'?m (done|finished)\b|\bi am (done|finished)\b|\bsubmit (my |the )?answer\b|\bnext question\b|\bend of (my )?answer\b/;
 const END_RE = /\b(end|finish|stop) (the )?interview\b/;
+const NO_RE = /\b(no|nope|not quite|not right|that'?s wrong|wrong|correction|change something|correct something|you missed|missed)\b/;
+const YES_RE = /\b(yes|yeah|yep|yup|correct|that'?s right|that is right|sounds right|exactly|confirm)\b/;
 const REPEAT_RE = /\b(repeat|say) (the|that) question\b|\brepeat that\b/;
 
 function candidateHint() {
   if (screen === "setup") return "Say “Start the interview”";
-  if (screen === "result") return "Say “New interview” to go again";
+  if (screen === "result") return "Say “Move the application forward” · “Reject the applicant” · “New interview”";
   if (recorder && recorder.state === "recording") return "Answering… say “That's my answer” when you're finished";
+  if (confirming) return "Say “Yes, that's right”, or “No…” to correct something";
   return "Recording starts after the question · “Repeat the question” · “End the interview”";
 }
 
@@ -375,10 +537,15 @@ function onCandidatePhrase(text) {
     $("btn-start").click();
   } else if (screen === "interview") {
     if (recording && DONE_RE.test(t)) stopRecording();
+    else if (confirming && !recording && !busy && NO_RE.test(t)) startCorrection();
+    else if (confirming && !recording && !busy && YES_RE.test(t)) confirmYes();
     else if (!recording && !busy && END_RE.test(t)) $("btn-finish").click();
     else if (!recording && !busy && REPEAT_RE.test(t)) readQuestion();
-  } else if (screen === "result" && /\b(new|another) interview\b/.test(t)) {
-    show("setup");
+  } else if (screen === "result") {
+    if (/\b(move|moving|push|send)\b.*\b(forward|on|ahead|through)\b|\badvance\b|\bnext stage\b/.test(t)) decide("advance");
+    else if (/\breject/.test(t)) decide("reject");
+    else if (/\bundo\b/.test(t)) resetDecision();
+    else if (/\b(new|another) interview\b/.test(t)) show("setup");
   }
 }
 

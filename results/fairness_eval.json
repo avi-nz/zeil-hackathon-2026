@@ -1,0 +1,352 @@
+{
+  "summary": {
+    "runs_per_version": 3,
+    "mean_abs_gap_raw": 0.18,
+    "mean_abs_gap_restated": 0.05,
+    "native_inflation_from_restating": 0.09,
+    "control_raw": {
+      "native": 2.3,
+      "second_language": 2.3
+    },
+    "control_restated": {
+      "native": 2.4,
+      "second_language": 2.47
+    },
+    "control_as_shown": {
+      "native": {
+        "raw": {
+          "score": 2.3,
+          "coverage": 1,
+          "total": 5,
+          "band": "INSUFFICIENT EVIDENCE"
+        },
+        "restated": {
+          "score": 2.4,
+          "coverage": 1,
+          "total": 5,
+          "band": "INSUFFICIENT EVIDENCE"
+        }
+      },
+      "second_language": {
+        "raw": {
+          "score": 2.3,
+          "coverage": 1,
+          "total": 5,
+          "band": "INSUFFICIENT EVIDENCE"
+        },
+        "restated": {
+          "score": 2.43,
+          "coverage": 1,
+          "total": 5,
+          "band": "INSUFFICIENT EVIDENCE"
+        }
+      }
+    },
+    "grid": {
+      "knows_polished": {
+        "raw": {
+          "score": 4.77,
+          "coverage": 5,
+          "total": 5,
+          "band": "STRONG EVIDENCE"
+        },
+        "restated": {
+          "score": 4.83,
+          "coverage": 5,
+          "total": 5,
+          "band": "STRONG EVIDENCE"
+        }
+      },
+      "knows_struggles": {
+        "raw": {
+          "score": 4.27,
+          "coverage": 5,
+          "total": 5,
+          "band": "STRONG EVIDENCE"
+        },
+        "restated": {
+          "score": 4.6,
+          "coverage": 5,
+          "total": 5,
+          "band": "STRONG EVIDENCE"
+        }
+      },
+      "bluffs_polished": {
+        "raw": {
+          "score": 2.37,
+          "coverage": 1,
+          "total": 5,
+          "band": "INSUFFICIENT EVIDENCE"
+        },
+        "restated": {
+          "score": 2.63,
+          "coverage": 1,
+          "total": 5,
+          "band": "INSUFFICIENT EVIDENCE"
+        }
+      },
+      "bluffs_struggles": {
+        "raw": {
+          "score": 2.3,
+          "coverage": 2,
+          "total": 5,
+          "band": "INSUFFICIENT EVIDENCE"
+        },
+        "restated": {
+          "score": 2.33,
+          "coverage": 2,
+          "total": 5,
+          "band": "INSUFFICIENT EVIDENCE"
+        }
+      },
+      "numbers_bluff": {
+        "raw": {
+          "score": 4.0,
+          "coverage": 1,
+          "total": 5,
+          "band": "INSUFFICIENT EVIDENCE"
+        },
+        "restated": {
+          "score": 3.8,
+          "coverage": 2,
+          "total": 5,
+          "band": "INSUFFICIENT EVIDENCE"
+        }
+      }
+    },
+    "communication": {
+      "native": 4.7,
+      "second_language": 4.4,
+      "fluent_but_unclear": 3.3,
+      "simple_but_clear": 3.87
+    }
+  },
+  "results": {
+    "Client about to churn": {
+      "native": {
+        "raw": 4.77,
+        "restated": 4.87,
+        "raw_runs": [
+          4.8,
+          4.8,
+          4.7
+        ],
+        "restated_runs": [
+          4.9,
+          4.9,
+          4.8
+        ],
+        "claims": [
+          "You were told by your largest client that they were not going to renew.",
+          "You dug into their usage data and the support tickets.",
+          "You realized the real issue was adoption because most of their team had never been properly onboarded.",
+          "You considered offering a discount.",
+          "You concluded that a discount would not fix the adoption problem.",
+          "You ran weekly training sessions with their team instead.",
+          "You saw active users go from 30 to 80 within two months.",
+          "You secured a renewal from them for another two years."
+        ]
+      },
+      "second_language": {
+        "raw": 4.6,
+        "restated": 4.8,
+        "raw_runs": [
+          4.6,
+          4.6,
+          4.6
+        ],
+        "restated_runs": [
+          4.8,
+          4.8,
+          4.8
+        ],
+        "claims": [
+          "You learned that your biggest client told you they would not renew.",
+          "You looked at their usage data and support tickets.",
+          "You understood the real problem was adoption because most of their team never got proper onboarding.",
+          "You thought about giving a discount, but realized this would not fix the adoption problem.",
+          "You made weekly training sessions with their team instead.",
+          "You saw active users go from 30 to 80 in two months.",
+          "You had them renew for two more years."
+        ]
+      }
+    },
+    "Late shipments": {
+      "native": {
+        "raw": 4.8,
+        "restated": 4.9,
+        "raw_runs": [
+          4.8,
+          4.8,
+          4.8
+        ],
+        "restated_runs": [
+          4.9,
+          4.9,
+          4.9
+        ],
+        "claims": [
+          "You faced a difficult problem where a key customer was furious because three orders in a row arrived late.",
+          "You traced each order through your system and found the delays all started at one warehouse.",
+          "You discovered a software update had broken the picking schedule at that warehouse.",
+          "You weighed paying for express freight against splitting the orders into partial shipments.",
+          "You chose partial shipments plus a credit because it was cheaper and got stock to them faster.",
+          "You retained the customer.",
+          "You achieved an on-time delivery rate of 95% for them the next quarter."
+        ]
+      },
+      "second_language": {
+        "raw": 4.6,
+        "restated": 4.8,
+        "raw_runs": [
+          4.6,
+          4.6,
+          4.6
+        ],
+        "restated_runs": [
+          4.8,
+          4.8,
+          4.8
+        ],
+        "claims": [
+          "You had an important customer who was very angry because three orders in a row arrived late.",
+          "You followed every order in your system and found that all delays started in one warehouse due to a software update that broke the picking schedule.",
+          "You compared paying for express freight versus splitting the orders into partial shipments.",
+          "You chose to use partial shipments and provide a credit because it was cheaper and stock arrived faster for them.",
+          "The customer stayed with you, and their on-time delivery rate reached 95% the next quarter."
+        ]
+      }
+    },
+    "Stalled deal on price": {
+      "native": {
+        "raw": 4.7,
+        "restated": 4.87,
+        "raw_runs": [
+          4.7,
+          4.7,
+          4.7
+        ],
+        "restated_runs": [
+          4.9,
+          4.9,
+          4.8
+        ],
+        "claims": [
+          "You faced a stalled $120k deal when the buyer said your price was too high.",
+          "You asked more questions and found the real blocker was timing because their annual budget was already committed.",
+          "You considered a straight discount but realized it would cut your margin without solving the budget problem.",
+          "You proposed a phased contract with a smaller first payment this year.",
+          "They signed the full $120k deal two weeks later."
+        ]
+      },
+      "second_language": {
+        "raw": 4.57,
+        "restated": 4.83,
+        "raw_runs": [
+          4.6,
+          4.5,
+          4.6
+        ],
+        "restated_runs": [
+          4.8,
+          4.8,
+          4.9
+        ],
+        "claims": [
+          "You had a $120k deal stuck because the buyer said your price was too high.",
+          "You did not accept this and asked more questions.",
+          "You found the real blocker was timing, as their budget for the year was already used.",
+          "You considered a direct discount, but it would cut your margin and not solve the budget problem.",
+          "You proposed a phased contract with a smaller first payment this year.",
+          "They signed the full $120k deal two weeks later."
+        ]
+      }
+    },
+    "Missed renewals": {
+      "native": {
+        "raw": 4.9,
+        "restated": 4.9,
+        "raw_runs": [
+          4.9,
+          4.9,
+          4.9
+        ],
+        "restated_runs": [
+          4.9,
+          4.9,
+          4.9
+        ],
+        "claims": [
+          "You noticed you kept missing renewal dates and wanted to know why.",
+          "You pulled the CRM reports and saw many accounts appeared twice, causing reminders to go to the wrong owner.",
+          "You compared cleaning the records by hand with using a de-duplication tool.",
+          "You chose the tool and a rule that blocks new duplicates because a manual clean-up would just drift again.",
+          "You dropped missed renewals from twelve one quarter to two the next."
+        ]
+      },
+      "second_language": {
+        "raw": 4.7,
+        "restated": 4.9,
+        "raw_runs": [
+          4.7,
+          4.7,
+          4.7
+        ],
+        "restated_runs": [
+          4.9,
+          4.9,
+          4.9
+        ],
+        "claims": [
+          "You noticed you were missing renewal dates many times and wanted to know why.",
+          "You took the CRM reports and saw that a lot of accounts were listed two times, causing reminders to go to the wrong owner.",
+          "You compared cleaning the records by hand to using a de-duplication tool.",
+          "You chose the tool together with a rule that blocks new duplicates because manual cleaning would go wrong again.",
+          "You reduced missed renewals from twelve in one quarter to two in the next one."
+        ]
+      }
+    },
+    "CONTROL (vague answer)": {
+      "native": {
+        "raw": 2.3,
+        "restated": 2.4,
+        "raw_runs": [
+          2.3,
+          2.3,
+          2.3
+        ],
+        "restated_runs": [
+          2.4,
+          2.4,
+          2.4
+        ],
+        "claims": [
+          "You once had a really difficult client.",
+          "You worked hard, talked to them a lot, and stayed positive.",
+          "In the end, things got much better.",
+          "You always try your best when there is a problem."
+        ]
+      },
+      "second_language": {
+        "raw": 2.3,
+        "restated": 2.47,
+        "raw_runs": [
+          2.3,
+          2.3,
+          2.3
+        ],
+        "restated_runs": [
+          2.5,
+          2.4,
+          2.5
+        ],
+        "claims": [
+          "You worked with a very difficult client before.",
+          "You worked hard, talked with them a lot, and stayed positive.",
+          "You noted that in the end things became much better.",
+          "You stated that you always try your best when there is a problem."
+        ]
+      }
+    }
+  }
+}

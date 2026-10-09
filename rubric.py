@@ -107,3 +107,36 @@ DEFAULT_JOB = {
         "dimensions": DIMENSIONS,
     }],
 }
+
+# ---------- Optional spoken-communication competency (customer-facing roles) ----------
+# Fixed, auditable rubric: Gemini only writes the role-play scenario and recommends whether the job needs it;
+# the recruiter decides. Scored from the candidate's WORDS (Jev never hears the audio), and never on accent,
+# native-like phrasing, vocabulary sophistication or grammar that doesn't block understanding.
+
+COMMUNICATION_RULE = (
+    "Judge whether the message would come across clearly to the listener from the words used: structure, "
+    "clarity, relevance and how they treat the listener. Do not reward or penalise accent, grammar mistakes that "
+    "do not block understanding, filler words, vocabulary sophistication or native-like phrasing. Simple words "
+    "that are clear count as fully as sophisticated ones."
+)
+
+COMMUNICATION_DIMENSIONS = [
+    {"id": "key_point_first", "label": "Key point first", "requirement": "Lead with the main point",
+     "description": "The candidate tells the listener the most important thing early (what happened, or what "
+                    "will happen next) rather than burying it."},
+    {"id": "clear_structure", "label": "Clear structure", "requirement": "Organise the explanation",
+     "description": "The candidate's explanation has a clear order the listener can follow, such as what "
+                    "happened, why, and what happens next."},
+    {"id": "listener_language", "label": "Listener's language", "requirement": "Adapt to the listener",
+     "description": "The candidate uses words the listener would understand and explains or avoids internal "
+                    "jargon and technical terms."},
+    {"id": "acknowledges_listener", "label": "Acknowledges the listener", "requirement": "Recognise their concern",
+     "description": "The candidate explicitly recognises the listener's situation, concern or feelings in what "
+                    "they say."},
+    {"id": "clear_next_step", "label": "Clear next step", "requirement": "Agree what happens next",
+     "description": "The candidate states a concrete next step or commitment the listener can rely on."},
+]
+
+
+def rule_for(competency: dict) -> str:
+    return COMMUNICATION_RULE if competency.get("kind") == "communication" else FAIRNESS_RULE
