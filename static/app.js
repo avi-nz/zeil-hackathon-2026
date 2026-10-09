@@ -1,9 +1,12 @@
 // Candidate interview. Shared helpers ($, api, postJson, escapeHtml, MARK) come from common.js.
 let job, sessionId, stream, recorder, chunks = [], recStart, recTimer;
 let scenarioIndex = 0, followUps = 0, lastStatus = {};
+let screen = "setup", busy = false, awaitingAnswer = false;
 
-function show(screen) {
-  for (const s of ["setup", "interview", "result"]) $(`screen-${s}`).classList.toggle("hidden", s !== screen);
+function show(name) {
+  screen = name;
+  for (const s of ["setup", "interview", "result"]) $(`screen-${s}`).classList.toggle("hidden", s !== name);
+  voice.render();
 }
 
 /* ---------- Setup ---------- */
@@ -103,6 +106,7 @@ async function requestMedia() {
   $("cam").srcObject = stream;
   camPrompt(stream.getVideoTracks().length ? null : "No camera found, recording audio only.", "", null);
   setBusy(null);
+  maybeAutoRecord();
 }
 
 $("btn-allow").onclick = requestMedia;
@@ -110,6 +114,8 @@ $("btn-allow").onclick = requestMedia;
 $("btn-record").onclick = () => (recorder && recorder.state === "recording" ? stopRecording() : startRecording());
 
 function startRecording() {
+  if (!stream || busy || (recorder && recorder.state === "recording")) return;
+  awaitingAnswer = false;
   speechSynthesis.cancel();
   chunks = [];
   // Only the audio track is recorded and sent; video is preview-only and never leaves the browser.
@@ -125,7 +131,10 @@ function startRecording() {
   $("rec-time").textContent = "0:00";
   $("rec-badge").classList.remove("hidden");
   $("btn-record").classList.add("on");
-  $("record-status").textContent = "Listening… press again when you're done";
+  $("record-status").textContent = voice.enabled
+    ? "Listening… say “That's my answer” when you're done"
+    : "Listening… press again when you're done";
+  voice.render();
 }
 
 function stopRecording() {
@@ -133,6 +142,7 @@ function stopRecording() {
   recorder.stop();
   $("rec-badge").classList.add("hidden");
   $("btn-record").classList.remove("on");
+  voice.render();
 }
 
 // Gemini reliably accepts WAV, so convert whatever the browser recorded into 16 kHz mono WAV.
@@ -219,6 +229,7 @@ async function submit(form) {
 }
 
 function setBusy(message) {
+  busy = !!message;
   $("btn-record").disabled = !!message || !stream;
   $("question").classList.toggle("thinking", !!message);
   $("record-status").textContent = message
@@ -233,8 +244,22 @@ function setQuestion(text, target) {
   $("q-target").classList.toggle("hidden", !target);
   $("q-target").dataset.label = target ? target.label : "";
   $("q-target").textContent = target ? `Seeking evidence: ${target.label}` : "";
-  speechSynthesis.cancel();
-  speechSynthesis.speak(new SpeechSynthesisUtterance(text));
+  readQuestion();
+}
+
+// Read the question aloud; in hands-free mode, start recording as soon as it has been read.
+function readQuestion() {
+  awaitingAnswer = false;
+  const text = $("question").textContent;
+  speak(text, voice).then(() => {
+    if ($("question").textContent !== text || screen !== "interview") return;
+    awaitingAnswer = true;
+    maybeAutoRecord();
+  });
+}
+
+function maybeAutoRecord() {
+  if (voice.enabled && awaitingAnswer && screen === "interview") startRecording();
 }
 
 function addTurn(question, targetLabel, answer) {
@@ -291,6 +316,7 @@ function hasScore(summary) {
 
 function renderResult(r) {
   speechSynthesis.cancel();
+  awaitingAnswer = false;
   const o = r.overall;
   $("result-title").textContent = r.title;
   $("result-score").textContent = o.score != null ? o.score.toFixed(1) : "n/a";
@@ -327,5 +353,35 @@ function renderResult(r) {
 }
 
 $("btn-restart").onclick = () => show("setup");
+
+/* ---------- Hands-free voice ---------- */
+
+const START_RE = /\b(start|begin)\b.*\binterview\b|\b(let'?s|i'?m ready to) (start|begin|go)\b/;
+const DONE_RE = /\b(that'?s|that is) (my|the) answer\b|\bi'?m (done|finished)\b|\bi am (done|finished)\b|\bsubmit (my |the )?answer\b|\bnext question\b|\bend of (my )?answer\b/;
+const END_RE = /\b(end|finish|stop) (the )?interview\b/;
+const REPEAT_RE = /\b(repeat|say) (the|that) question\b|\brepeat that\b/;
+
+function candidateHint() {
+  if (screen === "setup") return "Say “Start the interview”";
+  if (screen === "result") return "Say “New interview” to go again";
+  if (recorder && recorder.state === "recording") return "Answering… say “That's my answer” when you're finished";
+  return "Recording starts after the question · “Repeat the question” · “End the interview”";
+}
+
+function onCandidatePhrase(text) {
+  const t = text.toLowerCase();
+  const recording = recorder && recorder.state === "recording";
+  if (screen === "setup" && START_RE.test(t)) {
+    $("btn-start").click();
+  } else if (screen === "interview") {
+    if (recording && DONE_RE.test(t)) stopRecording();
+    else if (!recording && !busy && END_RE.test(t)) $("btn-finish").click();
+    else if (!recording && !busy && REPEAT_RE.test(t)) readQuestion();
+  } else if (screen === "result" && /\b(new|another) interview\b/.test(t)) {
+    show("setup");
+  }
+}
+
+const voice = new VoiceControl({ onPhrase: onCandidatePhrase, hint: candidateHint });
 
 init();

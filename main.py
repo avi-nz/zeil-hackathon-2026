@@ -106,6 +106,22 @@ def save(req: SaveRequest):
     return job
 
 
+class VoiceRequest(BaseModel):
+    utterance: str
+    screen: str = "form"
+    form: dict = {}
+    previous: str = ""
+    scenarios: list[str] = []
+
+
+@app.post("/api/voice/recruiter")
+def recruiter_voice(req: VoiceRequest):
+    """Hands-free recruiter: natural-language speech -> form updates and builder commands."""
+    if not req.utterance.strip():
+        raise HTTPException(422, "Empty utterance")
+    return gemini.interpret_recruiter(req.utterance.strip(), req.screen, req.form, req.previous, req.scenarios)
+
+
 # ---------- Interview (candidate side) ----------
 
 # In-memory sessions; this is a demo, nothing is persisted.

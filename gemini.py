@@ -38,7 +38,8 @@ def _generate(parts, schema=None, temperature=0.2, model=MODEL) -> str:
 def transcribe(audio: bytes, mime_type: str = "audio/wav") -> str:
     return _generate([
         {"inline_data": {"mime_type": mime_type, "data": base64.b64encode(audio).decode()}},
-        {"text": "Transcribe this interview answer verbatim, including filler words. "
+        {"text": "Transcribe this interview answer verbatim, including filler words. If it ends with a spoken "
+                 "command such as \"that's my answer\", \"I'm done\" or \"next question\", leave that command out. "
                  "Return only the transcript text. If there is no speech, return an empty string."},
     ], temperature=0)
 
@@ -214,4 +215,61 @@ rationale: one sentence on why this scenario tests the competency for this speci
             seen.add(dim_id)
             dims.append({"id": dim_id, **d})
         result.append({"id": _slug(c["name"]), **c, "dimensions": dims})
+    return result
+
+
+RECRUITER_COMMANDS = ["none", "generate", "regenerate", "publish", "edit_job", "remove_scenario",
+                      "open_interview", "new_job"]
+
+_RECRUITER_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "title": {"type": "string", "nullable": True},
+        "description": {"type": "string", "nullable": True},
+        "competencies": {"type": "array", "items": {"type": "string"}, "nullable": True},
+        "command": {"type": "string", "enum": RECRUITER_COMMANDS},
+        "scenario_number": {"type": "integer", "nullable": True},
+        "reply": {"type": "string"},
+    },
+    "required": ["title", "description", "competencies", "command", "scenario_number", "reply"],
+}
+
+
+def interpret_recruiter(utterance: str, screen: str, form: dict, previous: str, scenarios: list[str]) -> dict:
+    """Turn one spoken recruiter utterance into form updates and/or a command for the interview builder."""
+    prompt = f"""You are the voice assistant of a recruiter's interview builder. The recruiter is speaking hands-free;
+speech recognition may contain small errors, so interpret intent sensibly.
+
+Current screen: {screen}
+  - "form": filling in the job (title, description, up to {MAX_COMPETENCIES} competencies)
+  - "review": reviewing generated scenarios: {scenarios or "(none)"}
+  - "done": the interview has been published
+Current form:
+  title: {form.get("title") or "(empty)"}
+  description: {form.get("description") or "(empty)"}
+  competencies: {form.get("competencies") or "(none)"}
+Previous utterance: {previous or "(none)"}
+
+New utterance: "{utterance}"
+
+Return the NEW full value for any field the recruiter changed, and null for fields they did not mention.
+- title: a clean job title, e.g. "Machine Learning Engineer" (fix casing; "ML engineer" -> "Machine Learning Engineer").
+- description: a clear job description in full, punctuated sentences addressed to the candidate ("You'll ..."),
+  with proper capitalisation of tools (Python, AWS). Remove filler words but do not invent responsibilities,
+  tools or requirements they did not say. If they are adding to an existing description (or the previous
+  utterance was dictating it and this one continues it), keep the existing sentences and add the new content
+  as new sentences in the same style.
+- competencies: the full list after the change, max {MAX_COMPETENCIES}, Title Case. "add X" keeps the existing ones;
+  "remove X" drops it; a fresh list replaces them.
+- command, only if they clearly ask for it:
+  generate (create/generate the scenarios, on the form screen), regenerate (try again / new scenarios, on review),
+  publish (publish / complete / finish / done / looks good / save, on review), edit_job (go back and edit the job),
+  remove_scenario (with scenario_number, 1-based), open_interview (open / start / launch the candidate interview,
+  on done), new_job (create another job). Otherwise "none". Fields and a command can come in the same utterance.
+- If the utterance is not directed at the builder (small talk, noise), change nothing and use "none".
+- reply: a very short confirmation of what you did, e.g. "Title set. Added 3 competencies." or "Generating scenarios."
+  If nothing changed, a short hint of what they can say next."""
+    result = json.loads(_generate([{"text": prompt}], schema=_RECRUITER_SCHEMA, temperature=0))
+    if result.get("competencies") is not None:
+        result["competencies"] = result["competencies"][:MAX_COMPETENCIES]
     return result

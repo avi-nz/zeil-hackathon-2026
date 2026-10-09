@@ -14,10 +14,13 @@ const EXAMPLE = {
 
 let competencies = [];
 let draft = null;
+let screen = "form";
 
-function show(screen) {
-  for (const s of ["form", "review", "done"]) $(`screen-${s}`).classList.toggle("hidden", s !== screen);
+function show(name) {
+  screen = name;
+  for (const s of ["form", "review", "done"]) $(`screen-${s}`).classList.toggle("hidden", s !== name);
   window.scrollTo(0, 0);
+  voice.render();
 }
 
 /* ---------- Competency chips ---------- */
@@ -192,6 +195,65 @@ async function loadJobs() {
     $("form-error").textContent = e.message;
     $("form-error").classList.remove("hidden");
   }
+}
+
+/* ---------- Hands-free voice ---------- */
+
+const HINTS = {
+  form: "Try: “I want to create a job for a Machine Learning Engineer…” · “The competencies are…” · “Generate the scenarios”",
+  review: "Say: “Complete” to publish · “Regenerate” · “Remove scenario 2” · “Go back and edit the job”",
+  done: "Say: “Open the interview” · “Create another job”",
+};
+
+const voice = new VoiceControl({ onPhrase: queuePhrase, hint: () => HINTS[screen] });
+let pending = "", pendingTimer = null, previousUtterance = "", voiceQueue = Promise.resolve();
+
+// Speech recognition finalises after short pauses, so join phrases that arrive close together into one utterance.
+function queuePhrase(text) {
+  pending = `${pending} ${text}`.trim();
+  clearTimeout(pendingTimer);
+  pendingTimer = setTimeout(() => {
+    const utterance = pending;
+    pending = "";
+    voiceQueue = voiceQueue.then(() => handleUtterance(utterance));
+  }, 900);
+}
+
+function flash(el) {
+  el.classList.remove("voice-filled");
+  void el.offsetWidth;
+  el.classList.add("voice-filled");
+}
+
+async function handleUtterance(utterance) {
+  voice.setStatus(`“${utterance}” · working…`);
+  let r;
+  try {
+    r = await postJson("/api/voice/recruiter", {
+      utterance, screen, previous: previousUtterance,
+      form: { title: $("job-title").value, description: $("job-desc").value, competencies },
+      scenarios: draft ? draft.competencies.map((c) => c.name) : [],
+    });
+  } catch (e) {
+    voice.setStatus(e.message);
+    return;
+  }
+  previousUtterance = utterance;
+  voice.setStatus(`✓ ${r.reply}`);
+
+  if (r.title != null) { $("job-title").value = r.title; flash($("job-title")); }
+  if (r.description != null) { $("job-desc").value = r.description; flash($("job-desc")); }
+  if (r.competencies != null) { competencies = r.competencies.slice(0, MAX_COMPETENCIES); renderChips(); flash($("chip-input")); }
+
+  if (r.command === "generate" && screen === "form") await generate();
+  else if (r.command === "regenerate" && screen === "review") await generate();
+  else if (r.command === "publish" && screen === "review") $("btn-publish").click();
+  else if (r.command === "edit_job") show("form");
+  else if (r.command === "remove_scenario" && screen === "review" && draft.competencies.length > 1) {
+    const i = (r.scenario_number || 0) - 1;
+    if (i >= 0 && i < draft.competencies.length) { draft.competencies.splice(i, 1); renderReview(); }
+  } else if (r.command === "open_interview" && screen === "done") location.href = `${$("btn-open").href}&voice=1`;
+  else if (r.command === "new_job") $("btn-new").click();
 }
 
 renderChips();

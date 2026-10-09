@@ -37,3 +37,16 @@ record answer (browser, audio only; webcam is preview-only and never uploaded)
 - Missing evidence is reported as "Insufficient evidence" and excluded from the score, not scored as poor.
 - If Jev is unreachable, scoring falls back to Gemini on the same rubric and the UI says so.
 - "Type instead" on the interview screen is the backup path if the mic or speech-to-text fails.
+
+## Hands-free demo (voice)
+
+Both pages have a voice bar at the bottom (Chrome only; uses Chrome's speech recognition for live captions).
+
+- Recruiter: speak naturally, e.g. "I want to make a job for a machine learning engineer… the competencies are
+  problem solving, technical communication and ownership… generate the scenarios… complete it… open the interview".
+  Each phrase goes to Gemini (`/api/voice/recruiter`), which fills the form and/or triggers a command.
+- Candidate: "start the interview"; recording starts automatically after each question is read out;
+  say "that's my answer" to submit; "repeat the question"; "end the interview".
+
+Before recording the demo: open both pages once, click the mic, and allow microphone and camera access
+("allow on every visit"). Voice mode is remembered, so after that nothing needs to be clicked.

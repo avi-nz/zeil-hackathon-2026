@@ -302,3 +302,27 @@ summary { cursor: pointer; color: var(--purple); font-weight: 600; }
   .evidence-list { grid-template-columns: 1fr; }
   .review-title { font-size: 30px; }
 }
+
+/* Hands-free voice bar */
+body { padding-bottom: 110px; }
+.voice-bar {
+  position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); z-index: 20;
+  display: flex; align-items: center; gap: 14px; width: min(760px, calc(100% - 32px));
+  background: rgba(255, 255, 255, .96); backdrop-filter: blur(8px); border: 1px solid var(--line);
+  border-radius: 999px; padding: 10px 22px 10px 10px; box-shadow: 0 12px 40px rgba(132, 89, 255, .18);
+}
+.voice-toggle {
+  width: 46px; height: 46px; border-radius: 50%; border: 0; background: var(--grey); cursor: pointer;
+  display: grid; place-items: center; flex: none;
+}
+.voice-dot { width: 14px; height: 14px; border-radius: 50%; background: #9b9ba5; }
+.voice-bar.on .voice-toggle { background: var(--purple); animation: listen 1.8s infinite; }
+.voice-bar.on .voice-dot { background: #fff; }
+@keyframes listen { 50% { box-shadow: 0 0 0 9px rgba(132, 89, 255, .18); } }
+.voice-text { min-width: 0; flex: 1; }
+.voice-caption { font-weight: 600; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.voice-caption.interim { color: var(--muted); font-weight: 500; }
+.voice-hint { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
+.voice-hint:empty { display: none; }
+.voice-filled { animation: filled 1.6s ease-out; }
+@keyframes filled { 0% { box-shadow: 0 0 0 3px var(--purple); background: var(--lilac-soft); } 100% { box-shadow: 0 0 0 0 transparent; } }
