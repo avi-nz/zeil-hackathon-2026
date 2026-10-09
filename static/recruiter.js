@@ -1,4 +1,4 @@
-// Recruiter interview builder. Shared helpers ($, api, postJson, escapeHtml, MARK) come from common.js.
+// Recruiter interview builder. Shared helpers ($, api, postJson, escapeHtml) come from common.js.
 const MAX_COMPETENCIES = 3;
 const SUGGESTIONS = ["Problem Solving", "Technical Communication", "Ownership", "Collaboration",
   "Stakeholder Management", "Adaptability", "Attention to Detail", "Customer Focus"];
@@ -193,26 +193,6 @@ async function loadJobs() {
     $("form-error").classList.remove("hidden");
   }
 }
-
-/* ---------- Presentation-sensitivity check ---------- */
-
-$("btn-fairness").onclick = async () => {
-  const box = $("fairness");
-  box.innerHTML = `<p class="muted">Scoring two wordings of the same story with Jev…</p>`;
-  try {
-    const r = await api("/api/fairness");
-    const col = (title, x) => `<div><div class="label">${title}</div>
-      <blockquote>“${escapeHtml(x.text)}”</blockquote>
-      <table>${x.dimensions.map((d) => `<tr><td>${escapeHtml(d.label)}</td><td><span class="mark ${d.status}">${MARK[d.status]}</span> ${d.rating.toFixed(1)}</td></tr>`).join("")}</table>
-      <div class="fair-total">${x.summary.score?.toFixed(1) ?? "–"} / 5 <small class="label">${x.summary.band}</small></div></div>`;
-    box.innerHTML = `
-      <p>Same facts, different presentation. By design, changing style should not change the competency assessment.</p>
-      ${r.polished.scorer === "jev" ? "" : `<p class="label">Jev unavailable, fallback scorer (Gemini)</p>`}
-      <div class="fair-grid">${col("Candidate A: polished", r.polished)}${col("Candidate B: casual", r.casual)}</div>`;
-  } catch (e) {
-    box.innerHTML = `<p>${escapeHtml(e.message)}</p>`;
-  }
-};
 
 renderChips();
 loadJobs();
